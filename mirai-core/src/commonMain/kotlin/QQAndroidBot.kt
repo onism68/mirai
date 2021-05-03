@@ -142,6 +142,10 @@ internal open class QQAndroidBot constructor(
         ConcurrentComponentStorage().apply {
             val components = this // avoid mistakes
             set(BotReinitActions, botReinitActions)
+
+            // There's no need to interrupt a broadcasting event when network handler closed.
+            set(EventDispatcher, EventDispatcherImpl(bot.coroutineContext, logger.subLogger("EventDispatcher")))
+
             set(SsoProcessorContext, SsoProcessorContextImpl(bot))
             set(SsoProcessor, SsoProcessorImpl(get(SsoProcessorContext)))
             set(HeartbeatProcessor, HeartbeatProcessorImpl())
@@ -161,7 +165,7 @@ internal open class QQAndroidBot constructor(
             set(
                 PacketHandler, PacketHandlerChain(
                     LoggingPacketHandlerAdapter(get(PacketLoggingStrategy), networkLogger),
-                    EventBroadcasterPacketHandler(bot, networkLogger),
+                    EventBroadcasterPacketHandler(bot, components, networkLogger),
                     CallPacketFactoryPacketHandler(bot)
                 )
             )
