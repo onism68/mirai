@@ -55,6 +55,7 @@ internal fun Bot.asQQAndroidBot(): QQAndroidBot {
 // for tests
 internal class BotDebugConfiguration(
     var stateObserver: StateObserver? = LOGGING,
+    var recordExceptionInPacketDecoding: Boolean = false,
     var allowReinitActions: Boolean = false,
 )
 
