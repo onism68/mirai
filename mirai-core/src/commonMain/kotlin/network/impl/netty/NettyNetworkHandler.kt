@@ -73,7 +73,6 @@ internal open class NettyNetworkHandler(
 
     protected open fun handlePipelineException(ctx: ChannelHandlerContext, error: Throwable) {
         context.bot.logger.error(error)
-        // TODO: Reconnect
         synchronized(this) {
             if (_state !is StateConnecting) {
                 setState { StateConnecting(ExceptionCollector(error)) }

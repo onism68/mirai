@@ -23,16 +23,17 @@ import net.mamoe.mirai.internal.network.handler.NetworkHandler.State.INITIALIZED
 import net.mamoe.mirai.internal.network.handler.NetworkHandler.State.OK
 import net.mamoe.mirai.internal.test.assertEventBroadcasts
 import net.mamoe.mirai.internal.test.runBlockingUnit
+import org.junit.jupiter.api.TestInstance
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.seconds
 
 
+@TestInstance(TestInstance.Lifecycle.PER_METHOD)
 internal class NettyHandlerEventTest : AbstractNettyNHTest() {
     @Test
     fun `BotOnlineEvent after successful logon`() = runBlockingUnit {
-        resetSsoProcessor()
         assertEventBroadcasts<BotOnlineEvent> {
             assertEquals(INITIALIZED, network.state)
             bot.login() // launches a job which broadcasts the event
@@ -43,7 +44,6 @@ internal class NettyHandlerEventTest : AbstractNettyNHTest() {
 
     @Test
     fun `BotReloginEvent after successful reconnection`() = runBlockingUnit {
-        resetSsoProcessor()
         assertEventBroadcasts<BotReloginEvent> {
             assertEquals(INITIALIZED, network.state)
             bot.login()
@@ -57,7 +57,6 @@ internal class NettyHandlerEventTest : AbstractNettyNHTest() {
 
     @Test
     fun `BotOnlineEvent after successful reconnection`() = runBlockingUnit {
-        resetSsoProcessor()
         assertEquals(INITIALIZED, network.state)
         bot.login()
         bot.components[SsoProcessor].firstLoginSucceed = true
@@ -73,7 +72,6 @@ internal class NettyHandlerEventTest : AbstractNettyNHTest() {
 
     @Test
     fun `BotOfflineEvent after successful reconnection`() = runBlockingUnit {
-        resetSsoProcessor()
         assertEquals(INITIALIZED, network.state)
         bot.login()
         bot.components[SsoProcessor].firstLoginSucceed = true
@@ -89,7 +87,6 @@ internal class NettyHandlerEventTest : AbstractNettyNHTest() {
 
     @Test
     fun `from OK TO CONNECTING`() = runBlockingUnit {
-        resetSsoProcessor()
         withSsoProcessor {
             awaitCancellation() // never ends
         }
@@ -106,7 +103,6 @@ internal class NettyHandlerEventTest : AbstractNettyNHTest() {
 
     @Test
     fun `from CONNECTING TO OK the first time`() = runBlockingUnit {
-        resetSsoProcessor()
         val ok = CompletableDeferred<Unit>()
         withSsoProcessor { ok.join() }
         assertState(INITIALIZED)
@@ -122,7 +118,6 @@ internal class NettyHandlerEventTest : AbstractNettyNHTest() {
 
     @Test
     fun `from CONNECTING TO OK the second time`() = runBlockingUnit {
-        resetSsoProcessor()
         val ok = AtomicReference(CompletableDeferred<Unit>())
         withSsoProcessor { ok.get().join() }
 
@@ -155,7 +150,6 @@ internal class NettyHandlerEventTest : AbstractNettyNHTest() {
 
     @Test
     fun `BotOffline from OK TO CLOSED`() = runBlockingUnit {
-        resetSsoProcessor()
         bot.login()
         assertState(OK)
         delay(3.seconds) // `login` launches a job which broadcasts the event
@@ -169,7 +163,6 @@ internal class NettyHandlerEventTest : AbstractNettyNHTest() {
 
     @Test
     fun `BotOffline from CONNECTING TO CLOSED`() = runBlockingUnit {
-        resetSsoProcessor()
         network.setStateConnecting()
         delay(2.seconds) // `login` launches a job which broadcasts the event
         assertEventBroadcasts<Event>(1) {
@@ -183,7 +176,6 @@ internal class NettyHandlerEventTest : AbstractNettyNHTest() {
 
     @Test
     fun `no event from INITIALIZED TO OK`() = runBlockingUnit {
-        resetSsoProcessor()
         assertState(INITIALIZED)
         bot.login()
         bot.components[SsoProcessor].firstLoginSucceed = true
