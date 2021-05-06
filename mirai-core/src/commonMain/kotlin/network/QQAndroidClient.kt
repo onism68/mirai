@@ -86,46 +86,52 @@ internal open class QQAndroidClient(
 
     var onlineStatus: OnlineStatus = OnlineStatus.ONLINE
 
+    @Volatile
+    private var _ssoSequenceId: Int = Random.nextInt(100000)
+
     var fileStoragePushFSSvcList: FileStoragePushFSSvcList? = null
 
-    private val _ssoSequenceId: AtomicInt = atomic(85600)
-
+    @Synchronized
     @MiraiInternalApi("Do not use directly. Get from the lambda param of buildSsoPacket")
-    internal fun nextSsoSequenceId() = _ssoSequenceId.addAndGet(2)
-
-
-    private val messageSequenceId: AtomicInt = atomic(22911)
-    internal fun atomicNextMessageSequenceId(): Int = messageSequenceId.getAndAdd(2)
-
-    internal var strangerSeq: Int = 0
-
-    private val friendSeq: AtomicInt = atomic(22911)
-    internal fun getFriendSeq(): Int {
-        return friendSeq.value
-    }
-
-    internal fun nextFriendSeq(): Int {
-        return friendSeq.incrementAndGet()
-    }
-
-    internal fun setFriendSeq(compare: Int, id: Int): Boolean {
-        return friendSeq.compareAndSet(compare, id % 65535)
+    internal fun nextSsoSequenceId(): Int {
+        _ssoSequenceId += 2
+        val new = _ssoSequenceId
+        if (new > 100000) {
+            _ssoSequenceId = Random.nextInt(100000) + 60000
+        }
+        return new
     }
 
 
-    // TODO: 2021/4/14 investigate whether they can be minimized
-    private val requestPacketRequestId: AtomicInt = atomic(1921334513)
-    internal fun nextRequestPacketRequestId(): Int = requestPacketRequestId.getAndAdd(2)
+    val apkVersionName: ByteArray get() = protocol.ver.toByteArray() //"8.4.18".toByteArray()
+    val buildVer: String get() = "8.4.18.4810" // 8.2.0.1296 // 8.4.8.4810 // 8.2.7.4410
 
-    private val highwayDataTransSequenceIdForGroup: AtomicInt = atomic(87017)
-    internal fun nextHighwayDataTransSequenceIdForGroup(): Int = highwayDataTransSequenceIdForGroup.getAndAdd(2)
 
-    private val highwayDataTransSequenceIdForFriend: AtomicInt = atomic(43973)
-    internal fun nextHighwayDataTransSequenceIdForFriend(): Int = highwayDataTransSequenceIdForFriend.getAndAdd(2)
+    private val sequenceId: AtomicInt = atomic(getRandomUnsignedInt())
+    internal fun atomicNextMessageSequenceId(): Int = sequenceId.incrementAndGet()
+    internal fun nextRequestPacketRequestId(): Int = sequenceId.incrementAndGet()
 
-    private val highwayDataTransSequenceIdForApplyUp: AtomicInt = atomic(77918)
-    internal fun nextHighwayDataTransSequenceIdForApplyUp(): Int = highwayDataTransSequenceIdForApplyUp.getAndAdd(2)
 
+    @Volatile
+    private var highwayDataTransSequenceId: Int = Random.nextInt(100000)
+
+    @Synchronized
+    internal fun nextHighwayDataTransSequenceId(): Int {
+        highwayDataTransSequenceId += 1
+        val new = highwayDataTransSequenceId
+        if (new > 1000000) {
+            highwayDataTransSequenceId = Random.nextInt(1060000)
+        }
+        return new
+    }
+
+
+    private val friendSeq: AtomicInt = atomic(getRandomUnsignedInt())
+    internal fun getFriendSeq(): Int = friendSeq.value
+
+    internal fun nextFriendSeq(): Int = friendSeq.incrementAndGet()
+
+    internal fun setFriendSeq(compare: Int, id: Int): Boolean = friendSeq.compareAndSet(compare, id % 65535)
 
     internal val groupConfig: GroupConfig = GroupConfig()
 
