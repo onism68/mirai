@@ -11,11 +11,13 @@ package net.mamoe.mirai.internal.network.impl.netty
 
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.delay
 import net.mamoe.mirai.event.Event
 import net.mamoe.mirai.event.broadcast
 import net.mamoe.mirai.event.events.BotOfflineEvent
 import net.mamoe.mirai.event.events.BotOnlineEvent
 import net.mamoe.mirai.event.events.BotReloginEvent
+import net.mamoe.mirai.event.nextEvent
 import net.mamoe.mirai.internal.network.components.SsoProcessor
 import net.mamoe.mirai.internal.network.handler.NetworkHandler.State
 import net.mamoe.mirai.internal.network.handler.NetworkHandler.State.*
@@ -125,6 +127,8 @@ internal class NettyHandlerEventTest : AbstractNettyNHTest() {
             ok.get().complete(Unit)
             network.resumeConnection()
             eventDispatcher.joinBroadcast()
+            delay(5000) // BotReloginEvent broadcast not started now
+            eventDispatcher.joinBroadcast()
         }.let { event ->
             assertEquals(BotOnlineEvent::class, event[0]::class)
             assertEquals(BotReloginEvent::class, event[1]::class)
@@ -158,7 +162,10 @@ internal class NettyHandlerEventTest : AbstractNettyNHTest() {
         assertEventBroadcasts<Event>(1) {
             network.setStateClosed()
             network.resumeConnection()
-            eventDispatcher.joinBroadcast()
+            // TODO: fixme: No event broadcast
+            // eventDispatcher.joinBroadcast()
+            nextEvent<Event>(10000) { true }
+            delay(10000)
         }.let { event ->
             assertEquals(BotOfflineEvent.Active::class, event[0]::class)
         }

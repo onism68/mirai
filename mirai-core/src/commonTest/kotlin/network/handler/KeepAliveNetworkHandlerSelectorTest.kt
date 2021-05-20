@@ -9,9 +9,10 @@
 
 package net.mamoe.mirai.internal.network.handler
 
+import net.mamoe.mirai.event.Event
 import net.mamoe.mirai.event.events.BotReloginEvent
+import net.mamoe.mirai.event.nextEvent
 import net.mamoe.mirai.internal.network.framework.AbstractMockNetworkHandlerTest
-import net.mamoe.mirai.internal.network.framework.eventDispatcher
 import net.mamoe.mirai.internal.network.framework.ssoProcessor
 import net.mamoe.mirai.internal.network.handler.NetworkHandler.State
 import net.mamoe.mirai.internal.network.handler.selector.AbstractKeepAliveNetworkHandlerSelector
@@ -99,7 +100,9 @@ internal class KeepAliveNetworkHandlerSelectorTest : AbstractMockNetworkHandlerT
             network.ssoProcessor.firstLoginSucceed = true
             network.setStateConnecting()
             network.resumeConnection()
-            network.eventDispatcher.joinBroadcast() // `login` launches a job which broadcasts the event
+            // TODO: fixme: No event broadcast
+            // network.eventDispatcher.joinBroadcast() // `login` launches a job which broadcasts the event
+            nextEvent<Event>(10000) { true }
             assertEquals(State.OK, network.state)
         }
     }
